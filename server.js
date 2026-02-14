@@ -18,17 +18,12 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// PostgreSQL connection pool
+// PostgreSQL connection pool using DATABASE_URL
 const pool = new Pool({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    database: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    connectionString: process.env.DATABASE_URL,
     ssl: {
-        rejectUnauthorized: false
-    },
-        family: 4
+        rejectUnauthorized: false // Required for Supabase
+    }
 });
 
 // Configure multer for file upload (memory storage)
