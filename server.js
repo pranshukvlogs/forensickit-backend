@@ -18,13 +18,18 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// PostgreSQL connection pool using DATABASE_URL
+
+// PostgreSQL connection pool with IPv4 fix
+const { Pool } = require('pg');
+
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
         rejectUnauthorized: false // Required for Supabase
     },
-    family: 4 // Force IPv4 to avoid potential issues in some environments
+    family: 4, // THIS FORCES IPv4 ONLY - CRITICAL!
+    connectionTimeoutMillis: 10000, // 10 second timeout
+    idleTimeoutMillis: 30000 // 30 second idle timeout
 });
 
 // Configure multer for file upload (memory storage)
