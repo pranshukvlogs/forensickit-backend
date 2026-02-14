@@ -68,7 +68,7 @@ app.post('/api/cdr/upload', upload.single('file'), async (req, res) => {
 
         const fileBuffer = req.file.buffer;
         const fileName = req.file.originalname;
-        const analystId = req.body.analyst_id || 1; // Default to admin user ID 1
+        const analystId = req.body.analyst_id || 1;
         const caseId = req.body.case_id || 'CASE-001';
 
         // STEP 1: Calculate SHA-256 hash
@@ -86,10 +86,9 @@ app.post('/api/cdr/upload', upload.single('file'), async (req, res) => {
             [manifestId, fileName, sha256Hash, fileBuffer.length, analystId, caseId, 'VERIFIED']
         );
 
-        // STEP 3: Parse CSV file (simple parser for demo)
+        // STEP 3: Parse CSV file
         const fileContent = fileBuffer.toString('utf-8');
         const lines = fileContent.split('\n');
-        const headers = lines[0].split(',');
         
         let recordsInserted = 0;
         const errors = [];
@@ -103,7 +102,6 @@ app.post('/api/cdr/upload', upload.single('file'), async (req, res) => {
             if (values.length < 5) continue;
 
             try {
-                // Extract CDR fields (adjust based on your CSV format)
                 const callingNumber = values[0]?.trim() || null;
                 const calledNumber = values[1]?.trim() || null;
                 const callStart = values[2]?.trim() || null;
@@ -112,7 +110,6 @@ app.post('/api/cdr/upload', upload.single('file'), async (req, res) => {
                 const cellId = values[5]?.trim() || null;
                 const imei = values[6]?.trim() || null;
 
-                // Insert into database
                 await pool.query(
                     `INSERT INTO cdr_records 
                     (calling_number, called_number, call_start, duration_seconds, call_type, cell_id, imei, evidence_id)
@@ -125,7 +122,6 @@ app.post('/api/cdr/upload', upload.single('file'), async (req, res) => {
             }
         }
 
-        // STEP 4: Return success response
         res.json({
             success: true,
             message: 'CDR file processed successfully',
@@ -205,7 +201,8 @@ app.get('/', (req, res) => {
             '/api/test-db',
             '/api/cdr/upload (POST)',
             '/api/cdr (GET)',
-            '/api/statistics'
+            '/api/statistics',
+            '/api/anomalies (GET)'
         ]
     });
 });
@@ -245,11 +242,12 @@ app.listen(PORT, () => {
     console.log(`🚀 ForensicKit Backend API v1.0.0`);
     console.log(`========================================`);
     console.log(`✅ Server running on port ${PORT}`);
-    console.log(`✅ Database: ${process.env.DB_NAME} on ${process.env.DB_HOST}:${process.env.DB_PORT}`);
+    console.log(`✅ Database: Connected via DATABASE_URL`);
     console.log(`✅ Endpoints ready:`);
     console.log(`   - POST /api/cdr/upload`);
     console.log(`   - GET  /api/cdr`);
     console.log(`   - GET  /api/statistics`);
     console.log(`   - GET  /api/test-db`);
+    console.log(`   - GET  /api/anomalies`);
     console.log(`========================================`);
 });
