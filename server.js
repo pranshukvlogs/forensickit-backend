@@ -1,7 +1,7 @@
 // server.js – ForensicKit Backend with CDR Upload
 require('dotenv').config();
 const express = require('express');
-const { Pool } = require('pg');
+const { Pool } = require('pg');  // ← ONLY ONCE (KEEP THIS)
 const cors = require('cors');
 const multer = require('multer');
 const crypto = require('crypto');
@@ -11,25 +11,21 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-// Allow requests from React frontend
 app.use(cors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     credentials: true
 }));
 app.use(express.json());
 
-
 // PostgreSQL connection pool with IPv4 fix
-const { Pool } = require('pg');
-
-const pool = new Pool({
+const pool = new Pool({  // ← REMOVED duplicate require('pg')
     connectionString: process.env.DATABASE_URL,
     ssl: {
         rejectUnauthorized: false // Required for Supabase
     },
     family: 4, // THIS FORCES IPv4 ONLY - CRITICAL!
-    connectionTimeoutMillis: 10000, // 10 second timeout
-    idleTimeoutMillis: 30000 // 30 second idle timeout
+    connectionTimeoutMillis: 10000,
+    idleTimeoutMillis: 30000
 });
 
 // Configure multer for file upload (memory storage)
@@ -64,7 +60,6 @@ app.get('/api/test-db', async (req, res) => {
 // ============================================
 app.post('/api/cdr/upload', upload.single('file'), async (req, res) => {
     try {
-        // Check if file was uploaded
         if (!req.file) {
             return res.status(400).json({
                 success: false,
@@ -77,13 +72,11 @@ app.post('/api/cdr/upload', upload.single('file'), async (req, res) => {
         const analystId = req.body.analyst_id || 1;
         const caseId = req.body.case_id || 'CASE-001';
 
-        // STEP 1: Calculate SHA-256 hash
         const sha256Hash = crypto
             .createHash('sha256')
             .update(fileBuffer)
             .digest('hex');
 
-        // STEP 2: Create evidence manifest
         const manifestId = uuidv4();
         await pool.query(
             `INSERT INTO evidence_manifests 
@@ -92,14 +85,12 @@ app.post('/api/cdr/upload', upload.single('file'), async (req, res) => {
             [manifestId, fileName, sha256Hash, fileBuffer.length, analystId, caseId, 'VERIFIED']
         );
 
-        // STEP 3: Parse CSV file
         const fileContent = fileBuffer.toString('utf-8');
         const lines = fileContent.split('\n');
         
         let recordsInserted = 0;
         const errors = [];
 
-        // Process each line (skip header)
         for (let i = 1; i < lines.length; i++) {
             const line = lines[i].trim();
             if (!line) continue;
