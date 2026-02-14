@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 // Allow requests from React frontend
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     credentials: true
 }));
 app.use(express.json());
@@ -25,6 +25,10 @@ const pool = new Pool({
     database: process.env.DB_NAME,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
+    ssl: {
+        rejectUnauthorized: false
+    },
+        family: 4
 });
 
 // Configure multer for file upload (memory storage)
