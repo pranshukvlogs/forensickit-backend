@@ -23,7 +23,8 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
         rejectUnauthorized: false // Required for Supabase
-    }
+    },
+    family: 4 // Force IPv4 to avoid potential issues in some environments
 });
 
 // Configure multer for file upload (memory storage)
